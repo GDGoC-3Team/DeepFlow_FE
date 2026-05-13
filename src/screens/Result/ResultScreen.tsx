@@ -1,9 +1,9 @@
 import { View, Text } from 'react-native';
 
-export default function ReaderScreen() {
+export default function ResultScreen() {
   return (
     <View>
-      <Text>Reader Screen</Text>
+      <Text>Result Screen</Text>
     </View>
   );
 }
