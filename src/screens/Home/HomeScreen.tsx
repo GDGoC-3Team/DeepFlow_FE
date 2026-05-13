@@ -1,9 +1,13 @@
-import { View, Text } from 'react-native';
+import { ScrollView } from 'react-native';
+
+import QuoteCard from '../../components/home/QuoteCard';
 
 export default function HomeScreen() {
   return (
-    <View>
-      <Text>Home Screen</Text>
-    </View>
+    <ScrollView>
+      <QuoteCard />
+      <QuoteCard />
+      <QuoteCard />
+    </ScrollView>
   );
 }

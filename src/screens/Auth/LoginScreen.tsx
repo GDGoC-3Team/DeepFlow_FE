@@ -6,7 +6,9 @@ import {
   StyleSheet,
 } from 'react-native';
 
-export default function LoginScreen() {
+export default function LoginScreen({
+  navigation,
+}: any) {
   return (
     <View style={styles.container}>
       <View style={styles.topSection}>
@@ -21,7 +23,12 @@ export default function LoginScreen() {
         </Text>
       </View>
 
-      <TouchableOpacity style={styles.googleButton}>
+      <TouchableOpacity 
+        style={styles.googleButton}
+        onPress={() =>
+          navigation.replace('MainTabs')
+        }
+      >
         <Text style={styles.googleText}>
           Continue with Google
         </Text>
