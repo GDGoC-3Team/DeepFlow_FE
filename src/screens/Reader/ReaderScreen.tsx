@@ -1,3 +1,7 @@
+import {
+  RouteProp,
+  useRoute,
+} from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
 import { mockReadingPages } from '../../constants/mockReading';
@@ -8,6 +12,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
+  Modal,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +23,21 @@ export default function ReaderScreen() {
   const [seconds, setSeconds] = useState(0);
   const [pageTimes, setPageTimes] =
   useState<Record<number, number>>({});
+  const [menuVisible, setMenuVisible] =
+  useState(false);
+  const [highlightedSentences,
+  setHighlightedSentences] =
+  useState<
+    {
+      page: number;
+      sentenceIndex: number;
+    }[]
+  >([]);
+  const [selectedSentence, setSelectedSentence] =
+  useState<{
+    page: number;
+    sentenceIndex: number;
+  } | null>(null);
 
   const totalPages = 4;
 
@@ -44,6 +64,7 @@ export default function ReaderScreen() {
   const formatTime = (time: number) => {
   return time.toString().padStart(2, '0');
 };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -90,12 +111,44 @@ export default function ReaderScreen() {
         )}
         {/* 본문 */}
         <View style={styles.contentContainer}>
-          <Text style={styles.content}>
+          
             {
               mockReadingPages[page - 1]
-                ?.content
-            }
-          </Text>
+                ?.sentences.map(
+                  (sentence, index) => (
+                    <View
+                      key={index}
+                      style={styles.sentenceWrapper}>
+                      <TouchableOpacity
+                        
+                        activeOpacity={1}
+                        onLongPress={() => {
+                          setSelectedSentence({
+                            page,
+                            sentenceIndex: index,
+                          });
+                          setMenuVisible(true);
+                        }}
+                      >
+                        <Text style={[
+                          styles.content,
+                        
+                          highlightedSentences.some(
+                            (item) =>
+                              item.page === page &&
+                              item.sentenceIndex === index
+                            ) && styles.highlightedText,
+                          ]}
+                        >
+                          {sentence}
+                          
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )
+                )
+              }
+          
         </View>
 
         {/* 페이지 바 */}
@@ -141,6 +194,59 @@ export default function ReaderScreen() {
           </View>
         </View>
       </View>
+      <Modal
+        transparent
+        visible={menuVisible}
+        animationType="fade"
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() =>
+            setMenuVisible(false)
+          }
+        >
+          <View style={styles.menuBox}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setMenuVisible(false);
+
+                navigation.navigate(
+                  'SaveSentence',
+                  {
+                    selectedSentence,
+                  }
+                );
+              }}
+            >
+              <Text style={styles.menuText}>
+                문장 저장하기
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                if (selectedSentence) {
+                  setHighlightedSentences(
+                    (prev) => [
+                      ...prev,
+                      selectedSentence,
+                    ]
+                  );
+                }
+
+                setMenuVisible(false);
+              }}
+            >
+              <Text style={styles.menuText}>
+                형광펜 칠하기
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -267,4 +373,40 @@ bookAuthor: {
     fontSize: 10,
     color: '#9CA3AF',
   },
+  modalOverlay: {
+  flex: 1,
+  backgroundColor: 'rgba(0,0,0,0.1)',
+
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+
+menuBox: {
+  width: 220,
+
+  backgroundColor: '#FFFFFF',
+
+  borderRadius: 16,
+
+  paddingVertical: 10,
+},
+
+menuItem: {
+  paddingVertical: 16,
+  paddingHorizontal: 20,
+},
+
+menuText: {
+  fontSize: 16,
+  color: '#111827',
+},
+highlightedText: {
+  backgroundColor:
+    'rgba(37, 99, 235, 0.1)',
+
+  borderRadius: 6,
+},
+sentenceWrapper: {
+  marginBottom: 28,
+},
 });
