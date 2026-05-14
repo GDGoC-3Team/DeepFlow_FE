@@ -1,3 +1,4 @@
+import { useNavigation } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
 import { mockReadingPages } from '../../constants/mockReading';
 
@@ -12,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ReaderScreen() {
+  const navigation = useNavigation<any>();
   const [page, setPage] = useState(1);
   const [seconds, setSeconds] = useState(0);
   const [pageTimes, setPageTimes] =
@@ -123,7 +125,15 @@ export default function ReaderScreen() {
               </Text>
             </View>
 
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                if(!isLastPage) {
+                  setPage(page + 1 );
+                } else {
+                  navigation.navigate('Result');
+                }
+              }}
+              >
               <Text style={styles.pageButton}>
                 {isLastPage ? '완료' : '다음'}
               </Text>
