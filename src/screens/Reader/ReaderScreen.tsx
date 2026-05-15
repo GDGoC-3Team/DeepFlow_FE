@@ -212,7 +212,7 @@ export default function ReaderScreen() {
               onPress={() => {
                 setMenuVisible(false);
 
-                navigation.navigate(
+                navigation.push(
                   'SaveSentence',
                   {
                     selectedSentence,

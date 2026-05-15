@@ -17,6 +17,9 @@ export default function ReadingStackNavigator() {
       <Stack.Screen
         name="SaveSentence"
         component={SaveSentenceScreen}
+        options={{
+            headerShown: false,
+        }}
       />
 
       <Stack.Screen
