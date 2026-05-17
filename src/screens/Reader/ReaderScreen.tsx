@@ -5,7 +5,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useState, useEffect } from 'react';
 import { mockReadingPages } from '../../constants/mockReading';
-
+import { BlurView } from 'expo-blur';
 import {
   View,
   Text,
@@ -23,8 +23,23 @@ export default function ReaderScreen() {
   const [seconds, setSeconds] = useState(0);
   const [pageTimes, setPageTimes] =
   useState<Record<number, number>>({});
-  const [menuVisible, setMenuVisible] =
-  useState(false);
+
+  const [pageOrder, setPageOrder] =
+  useState<number[]>([1]);
+  const [
+  movedBackPages,
+  setMovedBackPages,
+] = useState<number[]>([]);
+
+  const [
+  sentenceMenuVisible,
+  setSentenceMenuVisible,
+] = useState(false);
+
+  const [
+    topMenuVisible,
+    setTopMenuVisible,
+  ] = useState(false);
   const [highlightedSentences,
   setHighlightedSentences] =
   useState<
@@ -40,21 +55,37 @@ export default function ReaderScreen() {
   } | null>(null);
 
   const totalPages = 4;
+  const readingData =
+  mockReadingPages.map(
+    (item, index) => ({
+
+      page: index + 1,
+
+      textLength:
+        item.sentences
+          .join(' ')
+          .length,
+
+    })
+  );
 
   const isLastPage = page === totalPages;
+  const [paused, setPaused] =
+  useState(false);
 
   useEffect(() => {
-  const timer = setInterval(() => {
-    setSeconds((prev) => prev + 1);
+    if(paused) return;
+    const timer = setInterval(() => {
+      setSeconds((prev) => prev + 1);
 
-    setPageTimes((prev) => ({
-      ...prev,
-      [page]: (prev[page] || 0) + 1,
-    }));
-  }, 1000);
+      setPageTimes((prev) => ({
+        ...prev,
+        [page]: (prev[page] || 0) + 1,
+      }));
+    }, 1000);
 
-  return () => clearInterval(timer);
-}, [page]);
+    return () => clearInterval(timer);
+  }, [page, paused]);
   const hours = Math.floor(seconds / 3600);
 
   const minutes = Math.floor(
@@ -64,6 +95,9 @@ export default function ReaderScreen() {
   const formatTime = (time: number) => {
   return time.toString().padStart(2, '0');
 };
+  
+
+  
 
 
   return (
@@ -84,7 +118,11 @@ export default function ReaderScreen() {
             오늘의 읽기
           </Text>
 
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              setTopMenuVisible(true)
+            }
+          >
             <Ionicons
               name="ellipsis-vertical"
               size={20}
@@ -111,6 +149,22 @@ export default function ReaderScreen() {
         )}
         {/* 본문 */}
         <View style={styles.contentContainer}>
+          {
+            paused && (
+
+              <BlurView
+                intensity={85}
+                style={styles.pauseOverlay}
+              >
+
+                <Text style={styles.pauseText}>
+                  타이머 정지 중
+                </Text>
+
+              </BlurView>
+
+            )
+          }
           
             {
               mockReadingPages[page - 1]
@@ -127,7 +181,7 @@ export default function ReaderScreen() {
                             page,
                             sentenceIndex: index,
                           });
-                          setMenuVisible(true);
+                          setSentenceMenuVisible(true);
                         }}
                       >
                         <Text style={[
@@ -157,7 +211,19 @@ export default function ReaderScreen() {
             <TouchableOpacity
               onPress={() => {
                 if (page > 1) {
-                  setPage(page - 1);
+                  const prevPage = page - 1;
+
+                  setPage(prevPage);
+
+                  setMovedBackPages((prev) => [
+                    ...prev,
+                    prevPage,
+                  ]);
+
+                  setPageOrder((prev) => [
+                    ...prev,
+                    prevPage,
+                  ]);
                 }
               }}
             >
@@ -181,9 +247,26 @@ export default function ReaderScreen() {
             <TouchableOpacity
               onPress={() => {
                 if(!isLastPage) {
-                  setPage(page + 1 );
+                  const nextPage = page + 1;
+                  setPage(nextPage);
+
+                  setPageOrder((prev) => [
+                    ...prev,
+                    nextPage,
+                  ]);
                 } else {
-                  navigation.navigate('Result');
+                  const payload = {
+                    totalReadingTime:
+                      seconds,
+                    pageTimes,
+                    pageOrder,
+                    movedBackPages,
+                    highlights:
+                      highlightedSentences,
+
+                    readingData,
+
+                  };
                 }
               }}
               >
@@ -196,21 +279,21 @@ export default function ReaderScreen() {
       </View>
       <Modal
         transparent
-        visible={menuVisible}
+        visible={sentenceMenuVisible}
         animationType="fade"
       >
         <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() =>
-            setMenuVisible(false)
+            setSentenceMenuVisible(false)
           }
         >
           <View style={styles.menuBox}>
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
-                setMenuVisible(false);
+                setSentenceMenuVisible(false);
 
                 navigation.push(
                   'SaveSentence',
@@ -237,7 +320,7 @@ export default function ReaderScreen() {
                   );
                 }
 
-                setMenuVisible(false);
+                setSentenceMenuVisible(false);
               }}
             >
               <Text style={styles.menuText}>
@@ -246,6 +329,50 @@ export default function ReaderScreen() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
+      </Modal>
+      <Modal
+        transparent
+        visible={topMenuVisible}
+        animationType="fade"
+      >
+
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          onPress={() =>
+            setTopMenuVisible(false)
+          }
+        >
+
+          <View style={styles.menuBox}>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+
+              onPress={() => {
+
+                setPaused(!paused);
+
+                setTopMenuVisible(false);
+
+              }}
+            >
+
+              <Text style={styles.menuText}>
+
+                {
+                  paused
+                    ? '타이머 다시 시작'
+                    : '타이머 정지'
+                }
+
+            </Text>
+
+          </TouchableOpacity>
+
+        </View>
+
+      </TouchableOpacity>
+
       </Modal>
     </SafeAreaView>
   );
@@ -408,5 +535,27 @@ highlightedText: {
 },
 sentenceWrapper: {
   marginBottom: 28,
+},
+pauseOverlay: {
+  position: 'absolute',
+  backgroundColor: 'rgba(255,255,255,0.15)',
+
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+
+  justifyContent: 'center',
+  alignItems: 'center',
+
+  zIndex: 10,
+},
+
+pauseText: {
+  fontSize: 22,
+
+  fontWeight: '700',
+
+  color: '#111827',
 },
 });

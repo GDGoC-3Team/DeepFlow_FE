@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSentenceStore, } from '../../store/sentenceStore';
 
 import {
   SafeAreaView,
@@ -23,7 +24,8 @@ import { mockReadingPages }
 from '../../constants/mockReading';
 
 import { mockBackgrounds }
-from '../../constants/mockBackground';
+from '../../constants/mockBackgrounds';
+
 
 export default function SaveSentenceScreen() {
 
@@ -76,6 +78,11 @@ export default function SaveSentenceScreen() {
     setSelectedFont,
   ] = useState('Kopub 바탕체');
 
+  const addSentence =
+  useSentenceStore(
+    (state) => state.addSentence
+  );
+
   return (
     <SafeAreaView style={styles.safeArea}>
 
@@ -113,9 +120,8 @@ export default function SaveSentenceScreen() {
 
           <Image
             source={
-              mockBackgrounds[
-                selectedBackground
-              ]
+              mockBackgrounds[selectedBackground]
+                .image
             }
             style={styles.previewImage}
             resizeMode="cover"
@@ -130,8 +136,21 @@ export default function SaveSentenceScreen() {
                 {
                   textAlign,
                   fontSize,
-                  lineHeight:
-                    fontSize * 1.5,
+                  lineHeight: fontSize * 1.5,
+
+                  fontFamily:
+                    selectedFont === 'Kopub 바탕체'
+                    ? 'KoPub'
+                    : selectedFont === '본고딕'
+                    ? 'NotoSans'
+                    : 'Nanum',
+
+                  color:
+                    mockBackgrounds[
+                        selectedBackground
+                    ].isDark
+                        ? '#FFFFFF'
+                        : '#111827',
                 },
               ]}
             >
@@ -179,7 +198,7 @@ export default function SaveSentenceScreen() {
                       }
                     >
                       <Image
-                        source={background}
+                        source={background.image}
                         style={[
                           styles.backgroundThumbnail,
 
@@ -419,6 +438,18 @@ export default function SaveSentenceScreen() {
           {/* 저장 버튼 */}
           <TouchableOpacity
             style={styles.saveButton}
+            onPress={() => {
+                addSentence({
+                    id: Date.now(),
+                    text: selectedText,
+                    background: selectedBackground,
+                    font: selectedFont,
+                    textAlign,
+                    fontSize,
+                    
+                });
+                navigation.goBack();
+            }}
           >
             <Text
               style={styles.saveButtonText}
@@ -508,8 +539,6 @@ const styles = StyleSheet.create({
   },
 
   previewText: {
-    color: '#FFFFFF',
-
     fontWeight: '700',
   },
 
