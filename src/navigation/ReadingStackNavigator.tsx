@@ -17,11 +17,17 @@ export default function ReadingStackNavigator() {
       <Stack.Screen
         name="SaveSentence"
         component={SaveSentenceScreen}
+        options={{
+            headerShown: false,
+        }}
       />
 
       <Stack.Screen
         name="Result"
         component={ResultScreen}
+        options={{
+            headerShown: false,
+        }}
       />
     </Stack.Navigator>
   );
