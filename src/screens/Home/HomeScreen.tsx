@@ -1,4 +1,4 @@
-// 📝 src/screens/Home/HomeScreen.tsx (순정 원복 및 깔끔본)
+
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 
 import HomeHeader from '../../components/home/HomeHeader';
-import QuoteCard from '../../components/home/QuoteCard'; // 💡 복구된 소중한 컴포넌트 호출
+import QuoteCard from '../../components/home/QuoteCard'; 
 import { API_CONFIG } from '../../config/apiConfig';
 import { homeService, HomeSentenceItem } from '../../services/homeService';
 
@@ -22,7 +22,7 @@ export default function HomeScreen() {
       setLoading(true);
 
       if (API_CONFIG.USE_MOCK) {
-        // 원래 쓰시던 목 데이터 피드 구성
+        
         const mockFeedItems: HomeSentenceItem[] = [
           {
             id: 1,
