@@ -202,6 +202,8 @@ export interface SavedSentenceResponse {
 
 export interface SavedSentenceItem {
   id: number;         // 저장 매핑 ID
+  groupId: number;
+  type: 'image' | 'text',
   sentenceId: number; // 원본 문장 ID
   sessionId: number;  // 읽은 독서 세션 ID
   content: string;    // 문장 본문
@@ -225,6 +227,8 @@ export interface ApiResponse<T> {
 const MOCK_MY_SENTENCES: SavedSentenceItem[] = [
   {
     id: 15,
+    groupId: 15,
+    type: 'image',
     sentenceId: 7,
     sessionId: 3,
     content: "책은 마음을 비추는 거울이다.",
@@ -268,6 +272,17 @@ export const sentenceService = {
       `/reading/${sessionId}/saved-sentences`,
       data
     );
+    return response;
+  },
+  // 세션 ID가 필요 없는 홈 피드 전용 API입니다.
+  toggleSentenceSave: async (sentenceId: number): Promise<ApiResponse<boolean>> => {
+    if (API_CONFIG.USE_MOCK) {
+      console.log(`🧪 [MOCK] 문장 피드 토글 완료 (문장 ID: ${sentenceId})`);
+      return { success: true, data: true, code: "200", message: "성공" };
+    }
+
+    // 명세서에 따르면 응답으로 true(boolean) 값이 반환됩니다.
+    const response = await api.post<any, ApiResponse<boolean>>(`/sentences/${sentenceId}/save`);
     return response;
   },
 

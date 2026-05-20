@@ -281,6 +281,7 @@ const screenWidth = Dimensions.get('window').width;
 
 type Props = {
   id?: number; 
+  index?: number;
   title?: string;
   quote?: string;
   author?: string;
@@ -288,7 +289,8 @@ type Props = {
 };
 
 export default function QuoteCard({
-  id = 15, 
+  id = 15,
+  index,
   title = '오늘의 문장 1',
   quote = '모든 위대한 책은 두 번 읽어야 한다.',
   author = 'MARCEL PROUST',
@@ -297,7 +299,7 @@ export default function QuoteCard({
   
   const savedSentences = useSentenceStore((state) => state.savedSentences);
   const addSentence = useSentenceStore((state) => state.addSentence);
-  const removeSentenceByText = useSentenceStore((state) => state.removeSentenceByText);
+   const removeSentenceByGroupId = useSentenceStore((state) => state.removeSentenceByGroupId);
 
   const [menuVisible, setMenuVisible] = useState(false);
 
@@ -315,22 +317,16 @@ export default function QuoteCard({
       // 🚀 [핵심 교정] 서비스 명세인 saveSentence(sessionId, data) 규격에 맞춰 파라미터 빌드!
       // Swagger 18p 스펙에 맞춰 필요한 필드들을 객체로 예쁘게 포장해서 전달합니다. [cite: 345, 346, 347, 348, 349, 350, 351, 352, 353]
       const mockSessionId = 3; // 명세서 예시 세션 ID 바인딩 [cite: 356]
-      await sentenceService.saveSentence(mockSessionId, {
-        selectedText: quote,
-        imageUrl: imageUrl || "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png", 
-        fontFamily: "NANUM_MYEONGJO",
-        fontSize: 18, 
-        startOffset: 120, 
-        endOffset: 156 
-      }); 
+      await sentenceService.toggleSentenceSave(id); 
       
-      console.log(`📡 [실서버] saveSentence API 통신 성공! (문장 보관함 전송 완료)`);
+      console.log(`📡 [실서버] toggleSentenceSave API 통신 성공!`);
 
       const groupId = Date.now();
 
       // 로컬 Zustand 스토어 데이터 동시 저장
       addSentence({
         id: groupId,
+        groupId: groupId,
         type: 'image',
         text: quote,
         author: author, 
@@ -343,6 +339,7 @@ export default function QuoteCard({
 
       addSentence({
         id: groupId + 1,
+        groupId: groupId,
         type: 'text',
         text: quote,
         author: author, 
@@ -352,7 +349,6 @@ export default function QuoteCard({
         textAlign: 'center',
         fontSize: 28,
       });
-
       if (showAlert) {
         Alert.alert('문장 저장 완료', '북마크가 활성화되며 마이페이지 [저장한 문장] 탭에 추가되었습니다! 📁💙');
       }
@@ -363,21 +359,45 @@ export default function QuoteCard({
   };
 
   // 🎯 우측 상단 북마크 토글 핸들러 (deleteMySentence 명세와 동기화)
+  // const handleBookmarkToggle = async () => {
+   
+  //   if (isBookmarked) {
+  //     try {
+  //       // 🚀 [핵심 교정] 보관함에서 해제할 때는 명세에 이미 선언되어 있는 deleteMySentence 사용!
+  //       // 카드의 고유 고유 id(기본값 15 [cite: 67, 324])를 넘겨서 서버 DB에서 원천 삭제 요청을 보냅니다. [cite: 70, 71]
+  //       await sentenceService.deleteMySentence(id);
+  //       //removeSentenceByText(quote);
+  //       const targetGroup = savedSentences.find(s => s.text === quote);
+  //       if (targetGroup) {
+  //         removeSentenceByGroupId(targetGroup.groupId);
+  //     }
+  //       Alert.alert('저장 취소', '북마크가 해제되어 마이페이지 저장 목록에서 삭제되었습니다. 🗑️');
+  //     } catch (error) {
+  //       console.error('❌ 서버 문장 저장 해제 실패:', error);
+  //     }
+  //   } else {
+  //     saveSentencePair(true);
+  //   }
+  // };
   const handleBookmarkToggle = async () => {
-    if (isBookmarked) {
-      try {
-        // 🚀 [핵심 교정] 보관함에서 해제할 때는 명세에 이미 선언되어 있는 deleteMySentence 사용!
-        // 카드의 고유 고유 id(기본값 15 [cite: 67, 324])를 넘겨서 서버 DB에서 원천 삭제 요청을 보냅니다. [cite: 70, 71]
-        await sentenceService.deleteMySentence(id);
-        removeSentenceByText(quote);
-        Alert.alert('저장 취소', '북마크가 해제되어 마이페이지 저장 목록에서 삭제되었습니다. 🗑️');
-      } catch (error) {
-        console.error('❌ 서버 문장 저장 해제 실패:', error);
-      }
-    } else {
-      saveSentencePair(true);
+  if (isBookmarked) {
+    try {
+      // 서버 삭제 시도
+      await sentenceService.deleteMySentence(id);
+    } catch (error) {
+      console.warn('서버 삭제 실패, 로컬 우선 삭제 진행');
     }
-  };
+    
+    // 무조건 로컬에서 삭제
+    const targetGroup = savedSentences.find(s => s.text === quote);
+    if (targetGroup) {
+      removeSentenceByGroupId(targetGroup.groupId);
+    }
+    Alert.alert('삭제 완료', '북마크가 해제되었습니다.');
+  } else {
+    saveSentencePair(true);
+  }
+};
 
   const handleSaveImageToGallery = async () => {
     setMenuVisible(false);
@@ -403,7 +423,7 @@ export default function QuoteCard({
               contentFit="contain"
             />
           </View>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.title}>{index !== undefined ? `${title} ${index + 1}`: title}</Text>
         </View>
 
         <TouchableOpacity onPress={() => setMenuVisible(true)}>
@@ -414,7 +434,9 @@ export default function QuoteCard({
       {/* 메인 390 정사각형 콘텐츠 영역 */}
       <View style={styles.imageWrapper}>
         <Image
-          source={hasValidImage ? { uri: imageUrl } : require('../../../assets/logo.png')}
+          source={hasValidImage ? { uri: imageUrl } : require('../../../assets/logo.png')
+         
+        }
           style={styles.bookImage}
           contentFit={hasValidImage ? "cover" : "contain"} 
         />
