@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 
 import Ionicons from '@expo/vector-icons/Ionicons';
-// 💡 1. 자식이 받아올 파라미터(Props)들의 타입을 명확하게 등록합니다.
+//  1. 자식이 받아올 파라미터(Props)들의 타입을 명확하게 등록합니다.
 type ProfileTabProps = {
   nickname: string;
   email: string;
