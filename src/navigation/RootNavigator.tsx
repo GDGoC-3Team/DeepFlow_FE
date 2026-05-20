@@ -1,19 +1,64 @@
+// import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+// import SplashScreen from '../screens/Splash/SplashScreen';
+// import LoginScreen from '../screens/Auth/LoginScreen';
+// import TabNavigator from './TabNavigator';
+// import ReaderScreen from '../screens/Reader/ReaderScreen';
+// import ResultScreen from '../screens/Result/ResultScreen';
+
+
+// const Stack = createNativeStackNavigator();
+
+// export default function RootNavigator() {
+//   return (
+//     <Stack.Navigator screenOptions={{ headerShown: false }}>
+//       <Stack.Screen name="Splash" component={SplashScreen} />
+//       <Stack.Screen name="Login" component={LoginScreen} />
+//       <Stack.Screen name="MainTabs" component={TabNavigator} />
+//       <Stack.Screen name="Reader" component={ReaderScreen} />
+//       <Stack.Screen name="ResultScreen" component={ResultScreen} />
+//     </Stack.Navigator>
+//   );
+// }
+
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import SplashScreen from '../screens/Splash/SplashScreen';
 import LoginScreen from '../screens/Auth/LoginScreen';
 import TabNavigator from './TabNavigator';
 import ReaderScreen from '../screens/Reader/ReaderScreen';
+import ResultScreen from '../screens/Result/ResultScreen';
+import ReadingStackNavigator from './ReadingStackNavigator';
 
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Splash" component={SplashScreen} />
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="MainTabs" component={TabNavigator} />
-      <Stack.Screen name="Reader" component={ReaderScreen} />
+      <Stack.Screen
+        name="Splash"
+        component={SplashScreen}
+      />
+
+      <Stack.Screen
+        name="Login"
+        component={LoginScreen}
+      />
+
+      <Stack.Screen
+        name="MainTabs"
+        component={TabNavigator}
+      />
+
+      <Stack.Screen
+        name="Reader"
+        component={ReaderScreen}
+      />
+
+      <Stack.Screen
+        name="Result"
+        component={ResultScreen}
+      />
     </Stack.Navigator>
   );
 }
