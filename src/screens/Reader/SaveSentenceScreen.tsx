@@ -441,7 +441,7 @@
 //   },
 // });
 import { sentenceService } from '../../services/sentenceService';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   SafeAreaView,
   View,
@@ -461,6 +461,9 @@ export default function SaveSentenceScreen() {
   const navigation = useNavigation<any>();
 
   const { selectedSentence } = route.params || {};
+  useEffect(() => {
+    console.log("📂 저장 화면이 받은 데이터 객체:", selectedSentence);
+  }, []);
   const sentenceText = selectedSentence?.text || "선택된 문장이 없습니다."; 
 
   const addSentence = useSentenceStore((state) => state.addSentence);
@@ -471,10 +474,18 @@ export default function SaveSentenceScreen() {
   const [fontSize, setFontSize] = useState(24);
 
   const handleSave = async () => {
+    const groupId = Date.now();
+    console.log("💾 저장 버튼 클릭 시점 데이터 확인:", {
+    author: selectedSentence?.author,
+    title: selectedSentence?.bookTitle
+  });
     try {
       // 💡 1. 로컬 이미지 카드 저장 (Zustand)
+      
       addSentence({
-        id: Date.now(),
+        id: groupId,
+        groupId: groupId,
+        
         text: sentenceText,
         background: selectedBackground,
         font: selectedFont,
@@ -488,7 +499,8 @@ export default function SaveSentenceScreen() {
 
       // 💡 2. 로컬 TEXT 카드 저장 (Zustand)
       addSentence({
-        id: Date.now() + 1,
+        id: groupId + 1,
+        groupId: groupId,
         text: sentenceText,
         background: selectedBackground,
         font: selectedFont,
@@ -511,7 +523,8 @@ export default function SaveSentenceScreen() {
         {
           selectedText: sentenceText,
           imageUrl: backendImageUrl,
-          fontFamily: selectedFont,
+          fontFamily: selectedFont === 'KoPub' ? 'KOPUB_BATANG' :
+                      selectedFont === 'NotoSans' ? 'NOTO_SANS' : 'NANUM_MYEONGJO',
           fontSize: fontSize,
           startOffset: 0,
           endOffset: 0,

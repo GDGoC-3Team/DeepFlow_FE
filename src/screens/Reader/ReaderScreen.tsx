@@ -1680,6 +1680,18 @@ export default function ReaderScreen() {
     id?: number; text: string; page: number; sentenceIndex: number;
   } | null>(null);
 
+  const handleSavePageTime = async (pageNumber: number, elapsedSeconds: number) => {
+  try {
+    // 🎯 서버는 0부터 페이지를 세므로 p-1을 적용
+    const serverPage = pageNumber - 1;
+    console.log(`📡 서버 전송: 세션ID=${sessionId}, 페이지=${serverPage}, 시간=${elapsedSeconds}초`);
+    
+    await readingService.savePageTime(sessionId, serverPage, elapsedSeconds);
+  } catch (e) {
+    console.error('페이지 시간 기록 실패:', e);
+  }
+};
+
   // 긴 글 자동 페이지 분할
   const splitIntoPages = (text: string, maxChars: number = 180) => {
     const sentences = text
@@ -1905,6 +1917,7 @@ export default function ReaderScreen() {
                 if (page > 1) {
                   const prevPage = page - 1;
                   try {
+                    console.log(`📡 [이전] 세션ID=${sessionId}, 서버전송페이지=${page }, 머문시간=${pageTimes[page] || 0}초`);
                     await readingService.savePageTime(sessionId, page, pageTimes[page] || 0);
                   } catch (e) {
                     console.error('페이지 시간 기록 실패:', e);
@@ -1936,6 +1949,7 @@ export default function ReaderScreen() {
                 if (!isLastPage) {
                   const nextPage = page + 1;
                   try {
+                    console.log(`📡 [다음/완료] 세션ID=${sessionId}, 서버전송페이지=${page}, 머문시간=${pageTimes[page] || 0}초`);
                     await readingService.savePageTime(sessionId, page, pageTimes[page] || 0);
                   } catch (e) {
                     console.error('페이지 시간 기록 실패:', e);
@@ -1944,6 +1958,7 @@ export default function ReaderScreen() {
                   setPageOrder((prev) => [...prev, nextPage]);
                 } else {
                   try {
+                    console.log(`📡 [완료] 세션ID=${sessionId}, 서버전송페이지=${page}, 머문시간=${pageTimes[page] || 0}초`);
                     await readingService.savePageTime(sessionId, page, pageTimes[page] || 0);
                   } catch (e) {
                     console.error('마지막 페이지 기록 실패:', e);
@@ -1980,6 +1995,13 @@ export default function ReaderScreen() {
               style={styles.menuItem}
               onPress={() => {
                 setSentenceMenuVisible(false);
+
+                const payload={
+                  ...selectedSentence,
+                  sessionId: sessionId,
+                  suthor: todayReading?.author,
+                  bookTitle: todayReading?.title
+                };
                 navigation.push('SaveSentence', { selectedSentence });
               }}
             >
