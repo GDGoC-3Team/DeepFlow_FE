@@ -67,10 +67,10 @@ export default function HomeScreen() {
           data={quotes}
           keyExtractor={(item, index) => `${item.content}-${index}`}
           ListHeaderComponent={<HomeHeader />}
-          renderItem={({ item }) => (
+          renderItem={({item, index}) => (
             <QuoteCard
               id={item.id}
-              title={item.bookTitle}
+              index={index}
               quote={item.content}
               author={item.author}
               imageUrl={item.imageUrl}
