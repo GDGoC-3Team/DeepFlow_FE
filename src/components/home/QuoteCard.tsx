@@ -1,4 +1,4 @@
-
+//홈 피드 용 카드
 import { useState } from 'react';
 import {
   View,
