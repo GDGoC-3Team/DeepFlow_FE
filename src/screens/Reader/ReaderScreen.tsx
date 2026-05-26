@@ -40,6 +40,17 @@ import {
 
 //  [해결 1] 마이페이지에서 세팅한 글자 크기 및 글꼴 조율 데이터를 수급하기 위해 서비스 임포트!
 import { settingService } from '../../services/settingService';
+type SentenceItem = {
+    text: string;
+    startOffset: number;
+    endOffset: number;
+  };
+
+  type PageItem = {
+    sentences: SentenceItem[];
+    startOffset: number;
+    endOffset: number;
+  };
 
 export default function ReaderScreen() {
 
@@ -62,7 +73,11 @@ export default function ReaderScreen() {
   const [sessionId, setSessionId] = useState<number>(1);
   const [loading, setLoading] = useState(true);
   const [todayReading, setTodayReading] = useState<TodayReading | null>(null);
-  const [pages, setPages] = useState<{ sentences: string[]; }[]>([]);
+ // const [pages, setPages] = useState<{ sentences: string[]; }[]>([]);
+  
+
+  const [pages, setPages] =
+    useState<PageItem[]>([]);
   const [pageTimes, setPageTimes] = useState<Record<number, number>>({});
 
   const completeToday = useReadingStore((state) => state.completeToday);
@@ -79,49 +94,130 @@ export default function ReaderScreen() {
   >([]);
 
   const [selectedSentence, setSelectedSentence] = useState<{
-    id?: number; text: string; page: number; sentenceIndex: number;
+    id?: number; text: string; page: number; sentenceIndex: number; startOffset: number; endOffset: number;
   } | null>(null);
 
-  const handleSavePageTime = async (pageNumber: number, elapsedSeconds: number) => {
+  const handleSavePageTime = async (
+  pageNumber: number,
+  elapsedSeconds: number
+) => {
+
   try {
-    //  서버는 0부터 페이지를 세므로 p-1을 적용
-    const serverPage = pageNumber - 1;
-    console.log(`📡 서버 전송: 세션ID=${sessionId}, 페이지=${serverPage}, 시간=${elapsedSeconds}초`);
-    
-    await readingService.savePageTime(sessionId, serverPage, elapsedSeconds);
+
+    const currentPageData =
+      pages[pageNumber - 1];
+
+    if (!currentPageData) return;
+
+    console.log(
+      `📡 서버 전송:
+      세션ID=${sessionId},
+      startOffset=${currentPageData.startOffset},
+      endOffset=${currentPageData.endOffset},
+      시간=${elapsedSeconds}초`
+    );
+
+    await readingService.savePageTime(
+      sessionId,
+      currentPageData.startOffset,
+      currentPageData.endOffset,
+      elapsedSeconds
+    );
+
   } catch (e) {
-    console.error('페이지 시간 기록 실패:', e);
+
+    console.error(
+      '페이지 시간 기록 실패:',
+      e
+    );
   }
 };
 
-  // 긴 글 자동 페이지 분할
-  const splitIntoPages = (text: string, maxChars: number = 180) => {
-    const sentences = text
-      .split(/\n+/)
-      .flatMap((line) => line.match(/[^.!?]+[.!?]?/g) || [])
-      .filter((sentence) => sentence.trim().length > 0);
+  const splitIntoPages = (
+  text: string,
+  maxChars: number = 180
+): PageItem[] => {
 
-    const pages: { sentences: string[]; }[] = [];
-    let currentPage: string[] = [];
-    let currentLength = 0;
+  const rawSentences = text
+    .split(/\n+/)
+    .flatMap(
+      (line) =>
+        line.match(/[^.!?]+[.!?]?/g) || []
+    )
+    .filter(
+      (sentence) =>
+        sentence.trim().length > 0
+    );
 
-    sentences.forEach((sentence) => {
-      const trimmed = sentence.trim();
-      if (currentLength + trimmed.length <= maxChars) {
-        currentPage.push(trimmed);
-        currentLength += trimmed.length;
-      } else {
-        pages.push({ sentences: currentPage });
-        currentPage = [trimmed];
-        currentLength = trimmed.length;
-      }
-    });
+  const pages: PageItem[] = [];
 
-    if (currentPage.length > 0) {
-      pages.push({ sentences: currentPage });
+  let currentPage: SentenceItem[] = [];
+  let currentLength = 0;
+
+  let currentOffset = 0;
+  let pageStartOffset = 0;
+
+  rawSentences.forEach((sentence) => {
+
+    const trimmed = sentence.trim();
+
+    const sentenceStartOffset =
+      currentOffset;
+
+    const sentenceEndOffset =
+      currentOffset + trimmed.length;
+
+    const sentenceItem: SentenceItem = {
+      text: trimmed,
+      startOffset: sentenceStartOffset,
+      endOffset: sentenceEndOffset,
+    };
+
+    if (
+      currentLength + trimmed.length <= maxChars
+    ) {
+
+      currentPage.push(sentenceItem);
+
+      currentLength += trimmed.length;
+
+    } else {
+
+      pages.push({
+        sentences: currentPage,
+        startOffset: pageStartOffset,
+        endOffset:
+          currentPage[
+            currentPage.length - 1
+          ]?.endOffset || pageStartOffset,
+      });
+
+      currentPage = [sentenceItem];
+
+      currentLength = trimmed.length;
+
+      pageStartOffset =
+        sentenceStartOffset;
     }
-    return pages;
-  };
+
+    currentOffset =
+      sentenceEndOffset + 1;
+  });
+
+  if (currentPage.length > 0) {
+
+    pages.push({
+      sentences: currentPage,
+      startOffset: pageStartOffset,
+      endOffset:
+        currentPage[
+          currentPage.length - 1
+        ]?.endOffset || pageStartOffset,
+    });
+  }
+
+  return pages;
+};
 
   const totalPages = pages.length;
   const isLastPage = page === totalPages;
@@ -272,7 +368,7 @@ export default function ReaderScreen() {
           )}
 
           <View>
-            {pages[page - 1]?.sentences.map((sentence: string, index: number) => (
+            {pages[page - 1]?.sentences.map((sentence: SentenceItem, index: number) => (
               <TouchableOpacity
                 key={index}
                 activeOpacity={1}
@@ -282,7 +378,9 @@ export default function ReaderScreen() {
                   );
                   setSelectedSentence({
                     id: matched?.id,
-                    text: sentence,
+                    text: sentence.text,
+                    startOffset: sentence.startOffset,
+                    endOffset: sentence.endOffset,
                     page,
                     sentenceIndex: index,
                   });
@@ -303,7 +401,7 @@ export default function ReaderScreen() {
                     ) && styles.highlightedText,
                   ]}
                 >
-                  {sentence}
+                  {sentence.text}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -320,7 +418,7 @@ export default function ReaderScreen() {
                   const prevPage = page - 1;
                   try {
                     console.log(` [이전] 세션ID=${sessionId}, 서버전송페이지=${page }, 머문시간=${pageTimes[page] || 0}초`);
-                    await readingService.savePageTime(sessionId, page, pageTimes[page] || 0);
+                    await handleSavePageTime( page, pageTimes[page] || 0 );
                   } catch (e) {
                     console.error('페이지 시간 기록 실패:', e);
                   }
@@ -352,7 +450,7 @@ export default function ReaderScreen() {
                   const nextPage = page + 1;
                   try {
                     console.log(` [다음/완료] 세션ID=${sessionId}, 서버전송페이지=${page}, 머문시간=${pageTimes[page] || 0}초`);
-                    await readingService.savePageTime(sessionId, page, pageTimes[page] || 0);
+                    await handleSavePageTime( page, pageTimes[page] || 0 );
                   } catch (e) {
                     console.error('페이지 시간 기록 실패:', e);
                   }
@@ -361,7 +459,7 @@ export default function ReaderScreen() {
                 } else {
                   try {
                     console.log(` [완료] 세션ID=${sessionId}, 서버전송페이지=${page}, 머문시간=${pageTimes[page] || 0}초`);
-                    await readingService.savePageTime(sessionId, page, pageTimes[page] || 0);
+                    await handleSavePageTime( page, pageTimes[page] || 0 );
                   } catch (e) {
                     console.error('마지막 페이지 기록 실패:', e);
                   }
@@ -421,7 +519,7 @@ export default function ReaderScreen() {
                         prev.filter((item) => !(item.page === page && item.sentenceIndex === selectedSentence.sentenceIndex))
                       );
                     } else {
-                      const resData = await readingService.createHighlight(sessionId, selectedSentence.text, 0, 0);
+                      const resData = await readingService.createHighlight(sessionId, selectedSentence.text, selectedSentence.startOffset, selectedSentence.endOffset);
                       setHighlightedSentences((prev) => [
                         ...prev,
                         {

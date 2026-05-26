@@ -188,22 +188,37 @@ export const readingService = {
 
   // 페이지별 읽기 시간 저장
   savePageTime: async (
-    sessionId: number,
-    pageNumber: number,
-    elapsedSeconds: number
-  ): Promise<any> => {
-    if (API_CONFIG.USE_MOCK) {
-      console.log('MOCK 페이지 시간 저장');
-      return true;
-    }
+  sessionId: number,
+  startOffset: number,
+  endOffset: number,
+  elapsedSeconds: number
+): Promise<any> => {
 
-    const response = await api.post<any, ApiResponse<any>>('/reading/page-time', {
-      sessionId,
-      pageNumber,
-      elapsedSeconds,
-    });
-    return response;
-  },
+  if (API_CONFIG.USE_MOCK) {
+
+    console.log(
+      'MOCK 페이지 시간 저장'
+    );
+
+    return true;
+  }
+
+  const response = await api.post<
+    any,
+    ApiResponse<any>
+  >('/reading/page-time', {
+
+    sessionId,
+
+    startOffset,
+
+    endOffset,
+
+    elapsedSeconds,
+  });
+
+  return response;
+},
 
   // 문장 저장
   saveSentence: async (sessionId: number, sentence: string): Promise<any> => {

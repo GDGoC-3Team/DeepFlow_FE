@@ -84,8 +84,8 @@ export default function SaveSentenceScreen() {
           fontFamily: selectedFont === 'KoPub' ? 'KOPUB_BATANG' :
                       selectedFont === 'NotoSans' ? 'NOTO_SANS' : 'NANUM_MYEONGJO',
           fontSize: fontSize,
-          startOffset: 0,
-          endOffset: 0,
+          startOffset: selectedSentence.startOffset,
+          endOffset: selectedSentence.endOffset,
         }
       );
 
