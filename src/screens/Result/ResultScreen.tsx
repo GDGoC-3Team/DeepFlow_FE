@@ -47,6 +47,21 @@ export default function ResultScreen() {
     ? movedBackPages[0] 
     : (pageTimeValues.indexOf(Math.min(...pageTimeValues)) + 1 || 4);
 
+  const totalPages = pageTimeValues.length;
+
+  const dynamicBarWidth =
+    Math.max(8, 220 / totalPages);
+
+  const dynamicGap =
+    totalPages > 20
+      ? 2
+      : totalPages > 12
+      ? 4
+      : 8;
+
+  const dynamicLabelFontSize =
+    totalPages > 20 ? 8 : 11;
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -76,19 +91,33 @@ export default function ResultScreen() {
                   height: number, 
                   index: number
                 ) => (
-                <View key={index} style={styles.barWrapper}>
+                <View 
+                  key={index} 
+                  style={[
+                    styles.barWrapper,
+                    {
+                      marginHorizontal:
+                      dynamicGap / 2,
+                    },
+                    ]}
+                    >
                   <View
                     style={[
                       styles.bar,
                       {
-                        
+                        width: dynamicBarWidth,
                         height: 120 * (height / maxPageTime),
                         //  몰입 패턴 분석에 따라 가장 딥하게 읽은 기둥을 하이라이팅(투명도 1) 합니다.
                         opacity: index === maxFocusIndex ? 1 : 0.55,
                       },
                     ]}
                   />
-                  <Text style={styles.barLabel}>{index + 1}p</Text>
+                  <Text style={[
+                    styles.barLabel,
+                    {
+                      fontSize:
+                      dynamicLabelFontSize,
+                    }]}>{index + 1}p</Text>
                   
                   {/* 가드 처리를 입혀서 연동 시 undefined 에러를 원천 차단 */}
                   <Text style={styles.barTime}>
@@ -250,7 +279,7 @@ const styles = StyleSheet.create({
   chartContainer: {
     height: 180,
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
     alignItems: 'flex-end',
   },
   barWrapper: {

@@ -67,6 +67,7 @@ export default function QuoteCard({
         type: 'image',
         text: quote,
         author: author, 
+        imageUrl: imageUrl,
         createdAt: new Date().toISOString(),
         background: 0,
         font: 'KoPub',

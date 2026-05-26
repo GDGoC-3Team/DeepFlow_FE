@@ -189,6 +189,7 @@ export const readingService = {
   // 페이지별 읽기 시간 저장
   savePageTime: async (
   sessionId: number,
+  pageNumber: number,
   startOffset: number,
   endOffset: number,
   elapsedSeconds: number
@@ -209,6 +210,8 @@ export const readingService = {
   >('/reading/page-time', {
 
     sessionId,
+    
+    pageNumber,
 
     startOffset,
 

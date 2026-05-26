@@ -15,6 +15,7 @@ type SavedSentence = {
   font: string;
   textAlign: 'left' | 'center' | 'right';
   fontSize: number;
+  imageUrl?: string;
 };
 
 type SentenceStore = {
